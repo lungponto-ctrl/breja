@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - BREJA BEER Distribuidora do Merreis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-md w-full bg-zinc-900 border border-yellow-500/30 rounded-3xl p-8 shadow-2xl">
+        <div class="text-center mb-8">
+            <span class="text-5xl">🍺</span>
+            <h1 class="text-2xl font-black tracking-wider text-yellow-400 mt-2">BREJA BEER</h1>
+            <p class="text-xs text-zinc-400 font-bold uppercase tracking-widest mt-1">Distribuidora do Merreis</p>
+        </div>
+
+        {% if error %}
+        <div class="mb-6 bg-red-600/20 border border-red-500 text-red-400 px-4 py-3 rounded-2xl text-center text-xs font-bold">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form action="/login" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-medium text-zinc-400 mb-1">Utilizador</label>
+                <input type="text" name="username" required class="w-full bg-zinc-950 border border-yellow-500/30 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-yellow-400">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-zinc-400 mb-1">Palavra-passe</label>
+                <input type="password" name="password" required class="w-full bg-zinc-950 border border-yellow-500/30 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-yellow-400">
+            </div>
+            <button type="submit" class="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-black py-3.5 rounded-xl text-sm transition shadow-xl mt-4">
+                Entrar no Sistema 🚀
+            </button>
+        </form>
+
+        <div class="text-center mt-6">
+            <a href="/" class="text-xs text-yellow-400 hover:underline font-bold">← Voltar para a Vitrine (Site)</a>
+        </div>
+    </div>
+</body>
+</html>

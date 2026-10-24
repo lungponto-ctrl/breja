@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribuidora do Merreis - PDV / Caixa de Balcão</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col">
+    <nav class="bg-black border-b border-yellow-500/30 p-4 shadow-lg">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="text-3xl">🍺</span>
+                <div>
+                    <h1 class="text-2xl font-black tracking-wider text-yellow-400">Distribuidora do Merreis</h1>
+                    <span class="text-xs text-zinc-400 tracking-widest uppercase block">Ponto de Venda (PDV)</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/admin/pdv" class="text-yellow-400 font-semibold border-b-2 border-yellow-400 pb-1 text-sm">Caixa / PDV</a>
+                <a href="/admin/estoque" class="text-zinc-400 hover:text-yellow-400 transition text-sm">Estoque</a>
+
+                <!-- Botão Kanban Piscante / Alerta Global -->
+                <a href="/admin/kanban" class="px-3 py-1.5 rounded text-sm font-bold transition flex items-center gap-1.5 {% if pendentes_count and pendentes_count > 0 %}bg-red-600 text-white animate-bounce border border-red-400 shadow-lg shadow-red-500/50{% else %}text-zinc-400 hover:text-yellow-400 transition text-sm{% endif %}">
+                    {% if pendentes_count and pendentes_count > 0 %}
+                        <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+                        🚨 Kanban ({{ pendentes_count }})
+                    {% else %}
+                        Kanban
+                    {% endif %}
+                </a>
+
+                <a href="/admin/financeiro" class="text-zinc-400 hover:text-yellow-400 transition text-sm">Financeiro</a>
+                <a href="/" target="_blank" class="bg-zinc-900 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 px-3 py-1.5 rounded-lg text-xs font-bold transition">🌐 Ver Site</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-6 flex-grow grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold text-yellow-400">Produtos em Estoque</h2>
+                <input type="text" id="buscaPdv" onkeyup="filtrarProdutosPdv()" placeholder="Buscar produto..." class="bg-zinc-900 border border-yellow-500/30 rounded-xl p-2.5 px-4 text-sm text-zinc-100 focus:border-yellow-400 focus:outline-none w-64 shadow-md">
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[calc(100vh-220px)] overflow-y-auto pr-1" id="gridProdutos">
+                {% for p in produtos %}
+                <div onclick="adicionarItem({{ p.id }}, '{{ p.nome }}', {{ p.preco_venda }}, {{ p.quantidade }})" class="item-card bg-zinc-900 border border-yellow-500/20 hover:border-yellow-400/80 rounded-xl p-3 cursor-pointer transition flex flex-col justify-between select-none shadow-lg">
+                    <div class="h-24 bg-zinc-800 rounded-lg flex items-center justify-center overflow-hidden mb-2 relative">
+                        {% if p.imagem %}
+                            <img src="{{ p.imagem }}" alt="{{ p.nome }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-3xl">🍺</span>
+                        {% endif %}
+                        <span class="absolute top-1 right-1 bg-black/80 text-yellow-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-yellow-500/20">Estoque: {{ p.quantidade }}</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm text-zinc-100 leading-tight mb-1 prod-nome">{{ p.nome }}</h4>
+                        <span class="text-yellow-400 font-extrabold text-base">R$ {{ "%.2f"|format(p.preco_venda) }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-zinc-500 text-sm col-span-full text-center py-12">Nenhum produto disponível.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-zinc-900 border border-yellow-500/30 rounded-2xl p-5 flex flex-col justify-between shadow-2xl h-[calc(100vh-220px)]">
+            <div>
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-zinc-800">
+                    <h3 class="font-bold text-lg text-zinc-100">Comanda Balcão 🛒</h3>
+                    <button onclick="limparComanda()" class="text-xs text-red-400 hover:text-red-300 font-semibold transition">Limpar Tudo</button>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs text-zinc-400 mb-1">Nome do Cliente</label>
+                    <input type="text" id="clienteNome" value="Cliente Balcão" class="w-full bg-zinc-950 border border-yellow-500/30 rounded-lg p-2 text-sm text-zinc-100 focus:border-yellow-400 focus:outline-none">
+                </div>
+                <div id="listaItens" class="space-y-2 max-h-52 overflow-y-auto pr-1 my-3">
+                    <p id="carrinhoVazio" class="text-xs text-zinc-500 text-center py-8">Nenhum produto selecionado.</p>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-zinc-800 space-y-3">
+                <div class="flex justify-between text-sm text-zinc-400">
+                    <span>Qtd. de Itens:</span>
+                    <span id="totalItensQtd" class="font-bold text-zinc-100">0</span>
+                </div>
+                <div class="flex justify-between items-center text-2xl font-black text-yellow-400 bg-black/60 p-3 rounded-xl border border-yellow-500/20">
+                    <span>TOTAL:</span>
+                    <span id="valorTotalExibicao">R$ 0.00</span>
+                </div>
+                <form action="/admin/pdv/finalizar" method="POST" onsubmit="return validarVenda()">
+                    <input type="hidden" name="cliente_nome" id="formClienteNome">
+                    <input type="hidden" name="itens_resumo" id="formItensResumo">
+                    <input type="hidden" name="valor_total" id="formValorTotal">
+                    <button type="submit" class="w-full bg-yellow-400 text-black text-base font-extrabold py-3 rounded-xl hover:bg-yellow-500 transition shadow-lg mt-2">
+                        FINALIZAR & DAR BAIXA ✅
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let comanda = [];
+        function adicionarItem(id, nome, preco, estoque) {
+            let item = comanda.find(i => i.id === id);
+            if (item) {
+                if (item.quantidade < estoque) item.quantidade++;
+                else alert("Quantidade limite do estoque atingida!");
+            } else {
+                comanda.push({ id, nome, preco, quantidade: 1, estoque });
+            }
+            atualizarComanda();
+        }
+        function alterarQtd(id, delta) {
+            let item = comanda.find(i => i.id === id);
+            if (item) {
+                item.quantidade += delta;
+                if (item.quantidade <= 0) comanda = comanda.filter(i => i.id !== id);
+            }
+            atualizarComanda();
+        }
+        function limparComanda() { comanda = []; atualizarComanda(); }
+        function atualizarComanda() {
+            let container = document.getElementById("listaItens");
+            container.innerHTML = "";
+            if (comanda.length === 0) {
+                container.innerHTML = '<p id="carrinhoVazio" class="text-xs text-zinc-500 text-center py-8">Nenhum produto selecionado.</p>';
+                document.getElementById("totalItensQtd").innerText = "0";
+                document.getElementById("valorTotalExibicao").innerText = "R$ 0.00";
+                return;
+            }
+            let totalValor = 0, totalQtd = 0, resumoTexto = [];
+            comanda.forEach(item => {
+                let subtotal = item.preco * item.quantidade;
+                totalValor += subtotal;
+                totalQtd += item.quantidade;
+                resumoTexto.push(`${item.quantidade}x ${item.nome}`);
+                let div = document.createElement("div");
+                div.className = "flex justify-between items-center bg-zinc-950 p-2.5 rounded-xl border border-zinc-800 text-xs";
+                div.innerHTML = `<div><p class="font-bold text-zinc-200">${item.nome}</p><p class="text-yellow-400 font-semibold">R$ ${subtotal.toFixed(2)}</p></div><div class="flex items-center space-x-2"><button type="button" onclick="alterarQtd(${item.id}, -1)" class="bg-zinc-800 text-zinc-300 w-6 h-6 rounded-md font-bold">-</button><span class="font-bold text-zinc-100">${item.quantidade}</span><button type="button" onclick="alterarQtd(${item.id}, 1)" class="bg-zinc-800 text-zinc-300 w-6 h-6 rounded-md font-bold">+</button></div>`;
+                container.appendChild(div);
+            });
+            document.getElementById("totalItensQtd").innerText = totalQtd;
+            document.getElementById("valorTotalExibicao").innerText = `R$ ${totalValor.toFixed(2)}`;
+            document.getElementById("formClienteNome").value = document.getElementById("clienteNome").value || "Cliente Balcão";
+            document.getElementById("formItensResumo").value = resumoTexto.join(", ");
+            document.getElementById("formValorTotal").value = totalValor.toFixed(2);
+        }
+        function validarVenda() {
+            if (comanda.length === 0) { alert("Selecione ao menos um produto!"); return false; }
+            document.getElementById("formClienteNome").value = document.getElementById("clienteNome").value || "Cliente Balcão";
+            return true;
+        }
+        function filtrarProdutosPdv() {
+            let input = document.getElementById("buscaPdv").value.toLowerCase();
+            document.querySelectorAll(".item-card").forEach(card => {
+                let nome = card.querySelector(".prod-nome").innerText.toLowerCase();
+                card.style.display = nome.includes(input) ? "" : "none";
+            });
+        }
+
+        // Alarme sonoro global ao carregar o PDV se houver pedidos pendentes
+        function tocarAlertaSonoro() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const g = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                g.gain.setValueAtTime(0.15, ctx.currentTime);
+                osc.connect(g);
+                g.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.4);
+            } catch(e) {}
+        }
+
+        {% if pendentes_count and pendentes_count > 0 %}
+            window.addEventListener('load', () => setTimeout(tocarAlertaSonoro, 1000));
+        {% endif %}
+    </script>
+</body>
+</html>

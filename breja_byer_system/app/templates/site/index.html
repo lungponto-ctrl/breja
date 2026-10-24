@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BREJA BEER Distribuidora do Merreis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen pb-20 flex flex-col justify-between">
+    <div>
+        <!-- Aviso Legal Menores de 18 anos -->
+        <div class="bg-red-600 text-white text-center py-2 px-4 text-xs font-extrabold uppercase tracking-widest shadow-md">
+            ⚠️ AVISO LEGAL: É proibida a venda e entrega de bebidas alcoólicas e cigarros a menores de 18 anos (Lei nº 8.069/90 - ECA). Beba com moderação.
+        </div>
+
+        <!-- Navbar do Site com Nome Grande e Dados da Loja -->
+        <header class="bg-black border-b border-yellow-500/30 px-6 py-5 flex flex-col md:flex-row justify-between items-center sticky top-0 z-40 shadow-lg gap-4">
+            <div class="flex items-center space-x-3 text-center md:text-left">
+                <span class="text-4xl">🍺</span>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-black tracking-wider text-yellow-400">BREJA BEER <span class="text-white text-lg font-bold block md:inline">Distribuidora do Merreis</span></h1>
+                    <p class="text-[11px] text-zinc-400 mt-1">📍 R. Antônio Anastácio, 45 - Residencial Lagoa, Betim | 📞 (31) 97143-6876</p>
+                </div>
+            </div>
+            <a href="/login" class="bg-zinc-900 border border-yellow-500/30 hover:bg-yellow-500/10 text-zinc-200 px-4 py-2 rounded-xl text-xs font-bold transition">Área Admin</a>
+        </header>
+
+        <main class="p-6 max-w-7xl mx-auto">
+            {% if request.query_params.get('sucesso') == 'true' %}
+            <div class="mb-6 bg-green-600/20 border border-green-500 text-green-400 px-4 py-3 rounded-2xl text-center text-sm font-bold shadow-lg">
+                Pedido realizado com sucesso! O seu atendimento já está a caminho. 🚀
+            </div>
+            {% endif %}
+
+            <!-- Pesquisa e Categorias -->
+            <div class="mb-8 bg-zinc-900 p-5 rounded-2xl border border-yellow-500/30 shadow-xl">
+                <form method="GET" action="/" class="flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <div class="w-full md:w-1/3">
+                        <input type="text" name="busca" value="{{ busca }}" placeholder="O que deseja beber ou alugar hoje?" class="w-full bg-zinc-950 border border-yellow-500/30 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-yellow-400">
+                    </div>
+                    <div class="flex flex-wrap gap-2 w-full md:w-auto items-center">
+                        <a href="/" class="px-4 py-2 rounded-xl text-xs font-bold transition {% if categoria_selecionada == 'Todas' %}bg-yellow-400 text-black shadow-md{% else %}bg-zinc-950 text-zinc-300 hover:bg-zinc-800 border border-zinc-800{% endif %}">Todas</a>
+                        {% for cat in categorias %}
+                            <a href="/?categoria={{ cat }}" class="px-4 py-2 rounded-xl text-xs font-bold transition {% if categoria_selecionada == cat %}bg-yellow-400 text-black shadow-md{% else %}bg-zinc-950 text-zinc-300 hover:bg-zinc-800 border border-zinc-800{% endif %}">{{ cat }}</a>
+                        {% endfor %}
+                    </div>
+                </form>
+            </div>
+
+            <!-- LAYOUT COM VITRINE ENCOLHÍVEL E CAIXA NA LATERAL -->
+            <div class="flex flex-col lg:flex-row gap-6 items-start">
+
+                <!-- Vitrine de Produtos -->
+                <div id="vitrine-container" class="w-full lg:w-full transition-all duration-300">
+                    <h2 class="text-xl font-extrabold text-yellow-400 mb-6">Produtos Disponíveis</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
+                        {% for p in produtos %}
+                        <div class="bg-zinc-900 border border-yellow-500/20 hover:border-yellow-400/60 rounded-2xl p-4 flex flex-col justify-between shadow-xl transition">
+                            <div>
+                                <div class="h-40 bg-zinc-950 rounded-xl mb-3 flex items-center justify-center overflow-hidden border border-zinc-800 relative">
+                                    {% if p.imagem %}
+                                        <img src="{{ p.imagem }}" alt="{{ p.nome }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                        <span class="text-4xl">🍺</span>
+                                    {% endif %}
+                                    <span class="absolute top-2 right-2 bg-black/80 text-yellow-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-yellow-500/20">Estoque: {{ p.quantidade }}</span>
+                                </div>
+                                <span class="text-[10px] bg-zinc-950 text-yellow-300 px-2.5 py-1 rounded-full font-bold border border-yellow-500/20">{{ p.categoria or 'Geral' }}</span>
+                                <h3 class="font-bold text-white text-base mt-2">{{ p.nome }}</h3>
+                                <p class="text-green-400 font-black text-lg mt-1">R$ {{ "%.2f"|format(p.preco_venda) }}</p>
+                            </div>
+                            <button type="button"
+                                    data-id="{{ p.id }}"
+                                    data-nome="{{ p.nome }}"
+                                    data-preco="{{ p.preco_venda }}"
+                                    data-estoque="{{ p.quantidade }}"
+                                    onclick="clicarAdicionar(this)"
+                                    class="mt-4 w-full bg-yellow-400 hover:bg-yellow-500 text-black font-extrabold py-2.5 rounded-xl text-xs transition shadow-md">
+                                + Adicionar
+                            </button>
+                        </div>
+                        {% else %}
+                        <div class="col-span-full text-center py-16 text-zinc-500">Nenhum produto encontrado.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- JANELA DE PEDIDOS LATERAL -->
+                <div id="carrinho-box" class="hidden w-full lg:w-[380px] bg-zinc-900 border-2 border-yellow-500 rounded-3xl p-5 shadow-2xl sticky top-24">
+                    <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-3">
+                        <h3 class="text-base font-black text-yellow-400">🛒 Janela de Pedidos</h3>
+                        <button type="button" onclick="limparCarrinho()" class="text-xs text-red-400 hover:text-red-300 font-semibold transition">Limpar Tudo</button>
+                    </div>
+
+                    <div id="itens-carrinho" class="space-y-2 mb-4 max-h-[250px] overflow-y-auto pr-1 text-sm text-zinc-300">
+                        <!-- Itens adicionados -->
+                    </div>
+
+                    <div class="flex justify-between items-center font-black text-base text-white mb-4 border-t border-zinc-800 pt-3">
+                        <span>Total:</span>
+                        <span id="total-carrinho" class="text-yellow-400 text-lg">R$ 0.00</span>
+                    </div>
+
+                    <form action="/fazer-pedido" method="POST" onsubmit="return prepararEnvioPedido()" class="space-y-3">
+                        <input type="hidden" name="itens_resumo" id="input-itens-resumo">
+                        <input type="hidden" name="valor_total" id="input-valor-total">
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-400 mb-1">Seu Nome *</label>
+                            <input type="text" name="cliente_nome" id="clienteNomeInput" required placeholder="Digite seu nome" class="w-full bg-zinc-950 border border-yellow-500/30 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-yellow-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-400 mb-1">Telefone / WhatsApp *</label>
+                            <input type="text" name="cliente_telefone" required placeholder="(31) 9XXXX-XXXX" class="w-full bg-zinc-950 border border-yellow-500/30 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-yellow-400">
+                        </div>
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl text-sm transition shadow-xl mt-2">
+                            Enviar Pedido para o Caixa 🚀
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <footer class="bg-black border-t border-zinc-800 text-center py-6 text-xs text-zinc-500 mt-20">
+        <p>BREJA BEER Distribuidora do Merreis © 2026 - Todos os direitos reservados.</p>
+    </footer>
+
+    <!-- Script de Gestão -->
+    <script>
+        let carrinho = [];
+
+        function clicarAdicionar(botao) {
+            let id = botao.getAttribute('data-id');
+            let nome = botao.getAttribute('data-nome');
+            let preco = parseFloat(botao.getAttribute('data-preco'));
+            let estoque = parseInt(botao.getAttribute('data-estoque'));
+
+            let item = carrinho.find(i => i.id == id);
+            if (item) {
+                if (item.quantidade < estoque) {
+                    item.quantidade++;
+                } else {
+                    alert("Estoque máximo atingido para este item!");
+                }
+            } else {
+                carrinho.push({ id: id, nome: nome, preco: preco, quantidade: 1, estoque: estoque });
+            }
+            atualizarCarrinhoUI();
+        }
+
+        function alterarQtdCarrinho(id, delta) {
+            let item = carrinho.find(i => i.id == id);
+            if (item) {
+                item.quantidade += delta;
+                if (item.quantidade <= 0) {
+                    carrinho = carrinho.filter(i => i.id != id);
+                }
+            }
+            atualizarCarrinhoUI();
+        }
+
+        function limparCarrinho() {
+            carrinho = [];
+            atualizarCarrinhoUI();
+        }
+
+        function atualizarCarrinhoUI() {
+            const container = document.getElementById('itens-carrinho');
+            const totalEl = document.getElementById('total-carrinho');
+            const boxCarrinho = document.getElementById('carrinho-box');
+            const vitrineContainer = document.getElementById('vitrine-container');
+
+            if (!container) return;
+
+            if (carrinho.length === 0) {
+                boxCarrinho.classList.add('hidden');
+                vitrineContainer.classList.remove('lg:w-[calc(100%-400px)]');
+                vitrineContainer.classList.add('lg:w-full');
+                return;
+            }
+
+            boxCarrinho.classList.remove('hidden');
+            vitrineContainer.classList.remove('lg:w-full');
+            vitrineContainer.classList.add('lg:w-[calc(100%-400px)]');
+
+            container.innerHTML = '';
+            let total = 0;
+
+            carrinho.forEach(item => {
+                let subtotal = item.preco * item.quantidade;
+                total += subtotal;
+                container.innerHTML += `
+                    <div class="flex justify-between items-center bg-zinc-950 p-2.5 rounded-xl border border-zinc-800 text-xs">
+                        <div>
+                            <p class="font-bold text-zinc-200">${item.nome}</p>
+                            <p class="text-yellow-400 font-semibold">R$ ${subtotal.toFixed(2)}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" onclick="alterarQtdCarrinho('${item.id}', -1)" class="bg-zinc-800 text-zinc-300 w-6 h-6 rounded-md font-bold hover:bg-zinc-700">-</button>
+                            <span class="font-bold text-zinc-100">${item.quantidade}</span>
+                            <button type="button" onclick="alterarQtdCarrinho('${item.id}', 1)" class="bg-zinc-800 text-zinc-300 w-6 h-6 rounded-md font-bold hover:bg-zinc-700">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (totalEl) totalEl.textContent = `R$ ${total.toFixed(2)}`;
+        }
+
+        function prepararEnvioPedido() {
+            if (carrinho.length === 0) {
+                alert("Adicione pelo menos um produto ao pedido antes de enviar!");
+                return false;
+            }
+            let resumoStr = carrinho.map(i => `${i.quantidade}x ${i.nome}`).join(', ');
+            let totalVal = carrinho.reduce((acc, i) => acc + (i.preco * i.quantidade), 0);
+
+            document.getElementById('input-itens-resumo').value = resumoStr;
+            document.getElementById('input-valor-total').value = totalVal;
+            return true;
+        }
+    </script>
+</body>
+</html>

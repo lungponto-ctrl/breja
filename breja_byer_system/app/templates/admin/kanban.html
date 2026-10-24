@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban de Pedidos - BREJA BEER Distribuidora do Merreis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+    <nav class="bg-black border-b border-yellow-500/30 px-6 py-4 flex justify-between items-center shadow-lg">
+    <div class="flex items-center space-x-4">
+        <h1 class="text-xl font-bold text-yellow-400">🍺 BREJA BEER <span class="text-xs text-zinc-400 font-normal">| Distribuidora do Merreis</span></h1>
+        <div class="hidden md:flex space-x-3 items-center">
+            <a href="/admin/estoque" class="px-3 py-2 rounded text-zinc-400 hover:text-white text-sm font-medium">Estoque</a>
+
+            <!-- Botão Kanban Piscando quando houver pedido pendente -->
+            <a href="/admin/kanban" class="px-3 py-2 rounded text-sm font-bold transition flex items-center gap-1.5 {% if kanban['Pendente'] | length > 0 %}bg-red-600 text-white animate-bounce border border-red-400 shadow-lg shadow-red-500/50{% else %}bg-yellow-500/20 text-yellow-400 border border-yellow-500/40{% endif %}">
+                {% if kanban['Pendente'] | length > 0 %}
+                    <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+                    🚨 Kanban ({{ kanban['Pendente'] | length }})
+                {% else %}
+                    Kanban
+                {% endif %}
+            </a>
+
+            <a href="/admin/pdv" class="px-3 py-2 rounded text-zinc-400 hover:text-white text-sm font-medium">PDV / Caixa</a>
+            <a href="/admin/financeiro" class="px-3 py-2 rounded text-zinc-400 hover:text-white text-sm font-medium">Financeiro / DRE</a>
+        </div>
+    </div>
+    <div class="flex items-center space-x-3">
+        <a href="/" target="_blank" class="bg-zinc-900 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 px-3 py-2 rounded-lg text-xs font-bold transition">🌐 Ver Site</a>
+        <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition">Sair</a>
+    </div>
+</nav>
+
+    <main class="p-6 max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-yellow-400">Gestão de Pedidos (Kanban)</h2>
+                <p class="text-sm text-zinc-400 font-medium mt-1">📅 <span id="data-atual"></span> | 🕒 <span id="hora-atual"></span></p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="tocarAlertaSonoro()" class="bg-zinc-900 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 px-3 py-1.5 rounded-lg text-xs font-bold transition">🔊 Testar Alarme</button>
+                <span class="text-xs bg-zinc-900 border border-yellow-500/20 text-zinc-400 px-3 py-1.5 rounded-lg">🔄 Atualização em tempo real</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- PENDENTES COM CABEÇALHO PISCANDO QUANDO HOUVER PEDIDO -->
+<div class="bg-zinc-900 rounded-2xl p-4 border {% if kanban['Pendente'] | length > 0 %}border-red-500 shadow-lg shadow-red-500/20{% else %}border-yellow-500/20{% endif %} flex flex-col h-[75vh]">
+    <div class="flex justify-between items-center mb-4 pb-2 border-b border-zinc-800 {% if kanban['Pendente'] | length > 0 %}animate-pulse bg-red-600/20 p-2 rounded-xl border-red-500{% endif %}">
+        <h3 class="font-extrabold {% if kanban['Pendente'] | length > 0 %}text-red-400 text-base{% else %}text-yellow-400{% endif %} flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full {% if kanban['Pendente'] | length > 0 %}bg-red-500 animate-ping{% else %}bg-yellow-400{% endif %}"></span>
+            {% if kanban['Pendente'] | length > 0 %}🚨 NOVO PEDIDO!{% else %}Pendentes{% endif %}
+        </h3>
+        <span class="{% if kanban['Pendente'] | length > 0 %}bg-red-600 text-white{% else %}bg-zinc-950 text-yellow-400{% endif %} text-xs px-2.5 py-1 rounded-full font-bold border border-yellow-500/20">
+            {{ kanban["Pendente"] | length }}
+        </span>
+    </div>
+    <div class="overflow-y-auto flex-1 space-y-3 pr-1">
+        {% for p in kanban["Pendente"] %}
+            {% set pedido = p %}
+            {% include 'admin/_card_pedido.html' with context %}
+        {% else %}
+            <p class="text-zinc-600 text-xs text-center py-6">Nenhum pendente.</p>
+        {% endfor %}
+    </div>
+</div>
+
+            <!-- EM PREPARO -->
+            <div class="bg-zinc-900 rounded-2xl p-4 border border-yellow-500/20 flex flex-col h-[75vh]">
+                <div class="flex justify-between items-center mb-4 pb-2 border-b border-zinc-800">
+                    <h3 class="font-bold text-blue-400 flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-400"></span> Em Preparo</h3>
+                    <span class="bg-zinc-950 text-xs px-2.5 py-1 rounded-full text-blue-400 font-bold border border-blue-500/20">{{ kanban["Em Preparo"] | length }}</span>
+                </div>
+                <div class="overflow-y-auto flex-1 space-y-3 pr-1">
+                    {% for p in kanban["Em Preparo"] %}
+                        {% set pedido = p %}
+                        {% include 'admin/_card_pedido.html' with context %}
+                    {% else %}
+                        <p class="text-zinc-600 text-xs text-center py-6">Nenhum em preparo.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- PRONTO -->
+            <div class="bg-zinc-900 rounded-2xl p-4 border border-yellow-500/20 flex flex-col h-[75vh]">
+                <div class="flex justify-between items-center mb-4 pb-2 border-b border-zinc-800">
+                    <h3 class="font-bold text-purple-400 flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-purple-400"></span> Pronto</h3>
+                    <span class="bg-zinc-950 text-xs px-2.5 py-1 rounded-full text-purple-400 font-bold border border-yellow-500/20">{{ kanban["Pronto"] | length }}</span>
+                </div>
+                <div class="overflow-y-auto flex-1 space-y-3 pr-1">
+                    {% for p in kanban["Pronto"] %}
+                        {% set pedido = p %}
+                        {% include 'admin/_card_pedido.html' with context %}
+                    {% else %}
+                        <p class="text-zinc-600 text-xs text-center py-6">Nenhum pronto.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ENTREGUE -->
+            <div class="bg-zinc-900 rounded-2xl p-4 border border-yellow-500/20 flex flex-col h-[75vh]">
+                <div class="flex justify-between items-center mb-4 pb-2 border-b border-zinc-800">
+                    <h3 class="font-bold text-green-400 flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-400"></span> Entregue</h3>
+                    <span class="bg-zinc-950 text-xs px-2.5 py-1 rounded-full text-green-400 font-bold border border-yellow-500/20">{{ kanban["Entregue"] | length }}</span>
+                </div>
+                <div class="overflow-y-auto flex-1 space-y-3 pr-1">
+                    {% for p in kanban["Entregue"] %}
+                        {% set pedido = p %}
+                        {% include 'admin/_card_pedido.html' with context %}
+                    {% else %}
+                        <p class="text-zinc-600 text-xs text-center py-6">Nenhum entregue.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function atualizarRelogio() {
+            const d = new Date();
+            document.getElementById('data-atual').textContent = d.toLocaleDateString('pt-BR');
+            document.getElementById('hora-atual').textContent = d.toLocaleTimeString('pt-BR');
+        }
+        setInterval(atualizarRelogio, 1000);
+        atualizarRelogio();
+
+        function tocarAlertaSonoro() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const g = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                g.gain.setValueAtTime(0.15, ctx.currentTime);
+                osc.connect(g);
+                g.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.4);
+            } catch(e) {}
+        }
+        {% if kanban["Pendente"] | length > 0 %}
+            window.addEventListener('load', () => setTimeout(tocarAlertaSonoro, 1000));
+        {% endif %}
+
+        // Função global para mudar status e abrir WhatsApp ao ficar 'Pronto'
+        function mudarStatusPedido(pedidoId, novoStatus, clienteTelefone, clienteNome) {
+            fetch(`/admin/kanban/status/${pedidoId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `status=${encodeURIComponent(novoStatus)}`
+            })
+            .then(response => {
+                if (response.ok) {
+                    if (novoStatus === 'Pronto' && clienteTelefone) {
+                        abrirNotificacaoWhatsapp(clienteTelefone, clienteNome);
+                    }
+                    window.location.reload();
+                } else {
+                    alert("Erro ao alterar o status do pedido.");
+                }
+            })
+            .catch(err => console.error("Erro na requisição:", err));
+        }
+
+        function abrirNotificacaoWhatsapp(telefone, nome) {
+            let num = telefone.replace(/\D/g, '');
+            if (num.length <= 11) {
+                num = '55' + num;
+            }
+            const nomeFormatado = nome ? nome.split('|')[0].trim() : 'cliente';
+            const msg = `Olá, ${nomeFormatado}! 🍺\n\nSeu pedido na *BREJA BEER Distribuidora do Merreis* está *PRONTO* para retirada!\n\n📍 *Endereço:* R. Antônio Anastácio, 45 - Residencial Lagoa, Betim.\n📞 *Contato:* (31) 97143-6876\n\nTe aguardamos!🚀`;
+
+            window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(msg)}`, '_blank');
+        }
+    </script>
+</body>
+</html>
