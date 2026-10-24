@@ -109,6 +109,34 @@ def excluir_produto(produto_id: int, request: Request, db: Session = Depends(get
     return RedirectResponse(url="/admin/estoque", status_code=303)
 
 
+# --- ADICIONADO: ROTA PARA EDITAR PRODUTO ---
+@router.post("/estoque/editar/{produto_id}")
+def editar_produto(
+    produto_id: int,
+    request: Request,
+    nome: str = Form(...),
+    categoria: str = Form(...),
+    preco_custo: float = Form(0.0),
+    preco_venda: float = Form(...),
+    quantidade: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    if not verificar_auth(request):
+        return RedirectResponse(url="/login", status_code=303)
+    try:
+        produto = db.query(Produto).filter(Produto.id == produto_id).first()
+        if produto:
+            produto.nome = nome
+            produto.categoria = categoria
+            produto.preco_custo = preco_custo
+            produto.preco_venda = preco_venda
+            produto.quantidade = quantidade
+            db.commit()
+    except Exception:
+        db.rollback()
+    return RedirectResponse(url="/admin/estoque", status_code=303)
+
+
 @router.get("/kanban")
 def admin_kanban(request: Request, db: Session = Depends(get_db)):
     if not verificar_auth(request):

@@ -98,8 +98,13 @@
                         <td class="p-3 font-bold {% if p.quantidade <= 3 %}text-red-400 animate-pulse{% else %}text-zinc-200{% endif %}">
                             {{ p.quantidade }} un
                         </td>
-                        <td class="p-3 text-center">
-                            <form action="/admin/estoque/excluir/{{ p.id }}" method="POST" onsubmit="return confirm('Deseja excluir?');" class="inline">
+                        <td class="p-3 text-center flex items-center justify-center gap-2">
+                            <!-- Botão Editar -->
+                            <button onclick="abrirModalEdicao({{ p.id }}, '{{ p.nome }}', '{{ p.categoria or 'Geral' }}', {{ p.preco_custo }}, {{ p.preco_venda }}, {{ p.quantidade }})" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1 rounded-lg text-xs font-semibold transition">
+                                Editar ✏️
+                            </button>
+                            <!-- Botão Excluir -->
+                            <form action="/admin/estoque/excluir/{{ p.id }}" method="POST" onsubmit="return confirm('Deseja excluir este produto?');" class="inline">
                                 <button type="submit" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1 rounded-lg text-xs font-semibold transition">Excluir 🗑️</button>
                             </form>
                         </td>
@@ -114,6 +119,7 @@
         </div>
     </main>
 
+    <!-- Modal Cadastrar Produto -->
     <div id="modal-produto" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
         <div class="bg-zinc-900 border border-yellow-500/30 rounded-2xl max-w-md w-full p-6 shadow-2xl">
             <h3 class="text-lg font-bold text-yellow-400 mb-4">Cadastrar Produto ou Aluguer</h3>
@@ -154,7 +160,52 @@
         </div>
     </div>
 
+    <!-- Modal Editar Produto -->
+    <div id="modal-editar" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div class="bg-zinc-900 border border-yellow-500/30 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-yellow-400 mb-4">Editar Produto ou Aluguer</h3>
+            <form id="form-editar" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-zinc-300 mb-1">Nome</label>
+                    <input type="text" id="edit_nome" name="nome" required class="w-full bg-zinc-950 border border-yellow-500/30 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-yellow-400">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-zinc-300 mb-1">Categoria</label>
+                    <input type="text" id="edit_categoria" name="categoria" required class="w-full bg-zinc-950 border border-yellow-500/30 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-yellow-400">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-300 mb-1">Custo (R$)</label>
+                        <input type="number" step="0.01" id="edit_preco_custo" name="preco_custo" class="w-full bg-zinc-950 border border-yellow-500/30 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-yellow-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-300 mb-1">Venda / Diária (R$)</label>
+                        <input type="number" step="0.01" id="edit_preco_venda" name="preco_venda" required class="w-full bg-zinc-950 border border-yellow-500/30 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-yellow-400">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-zinc-300 mb-1">Quantidade em Estoque</label>
+                    <input type="number" id="edit_quantidade" name="quantidade" required class="w-full bg-zinc-950 border border-yellow-500/30 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-yellow-400">
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="document.getElementById('modal-editar').classList.add('hidden')" class="bg-zinc-800 text-zinc-300 px-4 py-2 rounded-lg text-sm">Cancelar</button>
+                    <button type="submit" class="bg-yellow-400 text-black font-bold px-4 py-2 rounded-lg text-sm">Atualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        function abrirModalEdicao(id, nome, categoria, precoCusto, precoVenda, quantidade) {
+            document.getElementById('form-editar').action = `/admin/estoque/editar/${id}`;
+            document.getElementById('edit_nome').value = nome;
+            document.getElementById('edit_categoria').value = categoria;
+            document.getElementById('edit_preco_custo').value = precoCusto;
+            document.getElementById('edit_preco_venda').value = precoVenda;
+            document.getElementById('edit_quantidade').value = quantidade;
+            document.getElementById('modal-editar').classList.remove('hidden');
+        }
+
         function tocarAlertaSonoro() {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
