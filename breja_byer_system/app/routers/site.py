@@ -46,7 +46,7 @@ def fazer_pedido(
         request: Request,
         cliente_nome: str = Form(...),
         cliente_telefone: str = Form(...),
-        cliente_endereco: str = Form(...),
+        cliente_endereco: str = Form("Retirada no Balcão"),  # <--- Alterado para opcional com valor padrão
         itens_resumo: str = Form(...),
         valor_total: float = Form(...),
         db: Session = Depends(get_db)
