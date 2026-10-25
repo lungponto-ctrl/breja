@@ -160,9 +160,26 @@
         <p>BREJA BEER Distribuidora do Merreis © 2026 - Todos os direitos reservados.</p>
     </footer>
 
-    <!-- Script de Gestão -->
+    <!-- Script de Gestão com LocalStorage -->
     <script>
         let carrinho = [];
+
+        // Carrega o carrinho salvo no navegador assim que a página é aberta ou filtrada
+        window.addEventListener('DOMContentLoaded', () => {
+            let carrinhoSalvo = localStorage.getItem('carrinho_breja');
+            if (carrinhoSalvo) {
+                try {
+                    carrinho = JSON.parse(carrinhoSalvo);
+                } catch (e) {
+                    carrinho = [];
+                }
+            }
+            atualizarCarrinhoUI();
+        });
+
+        function salvarCarrinhoNoNavegador() {
+            localStorage.setItem('carrinho_breja', JSON.stringify(carrinho));
+        }
 
         function clicarAdicionar(botao) {
             let id = botao.getAttribute('data-id');
@@ -180,6 +197,7 @@
             } else {
                 carrinho.push({ id: id, nome: nome, preco: preco, quantidade: 1, estoque: estoque });
             }
+            salvarCarrinhoNoNavegador();
             atualizarCarrinhoUI();
         }
 
@@ -191,11 +209,13 @@
                     carrinho = carrinho.filter(i => i.id != id);
                 }
             }
+            salvarCarrinhoNoNavegador();
             atualizarCarrinhoUI();
         }
 
         function limparCarrinho() {
             carrinho = [];
+            localStorage.removeItem('carrinho_breja');
             atualizarCarrinhoUI();
         }
 
@@ -277,7 +297,6 @@
             document.getElementById('input-itens-resumo').value = resumoStr;
             document.getElementById('input-valor-total').value = totalVal;
 
-            // Se for dinheiro e precisar de troco, captura o valor preenchido
             const pag = document.getElementById('select-pagamento').value;
             if (pag === 'Dinheiro' && document.getElementById('input-precisa-troco').value === 'Sim') {
                 let trocoVal = parseFloat(document.getElementById('input-valor-troco-num').value) || 0;
@@ -288,6 +307,8 @@
                 document.getElementById('input-troco-para').value = trocoVal;
             }
 
+            // Limpa o carrinho do navegador após o pedido ser enviado com sucesso
+            localStorage.removeItem('carrinho_breja');
             return true;
         }
     </script>
