@@ -46,14 +46,22 @@ def fazer_pedido(
         request: Request,
         cliente_nome: str = Form(...),
         cliente_telefone: str = Form(...),
-        cliente_endereco: str = Form("Retirada no Balcão"),  # <--- Alterado para opcional com valor padrão
+        cliente_endereco: str = Form("Retirada no Balcão"),
         itens_resumo: str = Form(...),
         valor_total: float = Form(...),
+        forma_pagamento: str = Form("Pix"),          # <--- Novo campo recebido do carrinho
+        precisa_troco: str = Form("Não"),            # <--- Novo campo (Sim/Não)
+        troco_para: float = Form(0.0),               # <--- Novo campo com o valor do troco
         db: Session = Depends(get_db)
 ):
     try:
-        # Junta o endereço ao nome ou guarda formatado para o operador ver no Kanban
-        info_completa = f"{cliente_nome} | Tel: {cliente_telefone} | End: {cliente_endereco}"
+        # Formata a informação de pagamento e troco para aparecer organizada no painel/Kanban
+        pagamento_info = f"Pagto: {forma_pagamento}"
+        if forma_pagamento == "Dinheiro" and precisa_troco == "Sim" and troco_para > 0:
+            pagamento_info += f" (Troco para R$ {troco_para:.2f})"
+
+        # Junta todas as informações do cliente num único texto estruturado para o operador consultar facilmente
+        info_completa = f"{cliente_nome} | Tel: {cliente_telefone} | End: {cliente_endereco} | {pagamento_info}"
 
         novo = Pedido(
             cliente_nome=info_completa,
