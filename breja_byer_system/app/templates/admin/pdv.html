@@ -65,7 +65,7 @@
             </div>
         </div>
 
-        <div class="bg-zinc-900 border border-yellow-500/30 rounded-2xl p-5 flex flex-col justify-between shadow-2xl h-[calc(100vh-220px)]">
+        <div class="bg-zinc-900 border border-yellow-500/30 rounded-2xl p-5 flex flex-col justify-between shadow-2xl h-[calc(100vh-220px)] overflow-y-auto">
             <div>
                 <div class="flex justify-between items-center mb-4 pb-3 border-b border-zinc-800">
                     <h3 class="font-bold text-lg text-zinc-100">Comanda Balcão 🛒</h3>
@@ -75,7 +75,29 @@
                     <label class="block text-xs text-zinc-400 mb-1">Nome do Cliente</label>
                     <input type="text" id="clienteNome" value="Cliente Balcão" class="w-full bg-zinc-950 border border-yellow-500/30 rounded-lg p-2 text-sm text-zinc-100 focus:border-yellow-400 focus:outline-none">
                 </div>
-                <div id="listaItens" class="space-y-2 max-h-52 overflow-y-auto pr-1 my-3">
+
+                <!-- Seleção de Forma de Pagamento / Caderninho -->
+                <div class="mb-3 bg-zinc-950 p-3 rounded-xl border border-zinc-800 space-y-2">
+                    <label class="block text-xs font-bold text-yellow-400 uppercase tracking-wider">Forma de Pagamento</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center space-x-2 text-xs text-zinc-300 cursor-pointer bg-zinc-900 p-2 rounded-lg border border-zinc-800 hover:border-yellow-500/40">
+                            <input type="radio" name="tipoPagamento" value="avista" checked onchange="alternarTipoPagamento()" class="text-yellow-400 focus:ring-0">
+                            <span>À Vista / Pix / Cartão</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs text-zinc-300 cursor-pointer bg-zinc-900 p-2 rounded-lg border border-zinc-800 hover:border-yellow-500/40">
+                            <input type="radio" name="tipoPagamento" value="fiado" onchange="alternarTipoPagamento()" class="text-yellow-400 focus:ring-0">
+                            <span>📓 Caderninho (Fiado)</span>
+                        </label>
+                    </div>
+
+                    <!-- Bloco de Vencimento caso seja Fiado -->
+                    <div id="blocoVencimento" class="hidden pt-2 mt-2 border-t border-zinc-800">
+                        <label class="block text-xs text-zinc-400 mb-1">Data de Vencimento (Prazo)</label>
+                        <input type="date" id="dataVencimento" class="w-full bg-zinc-900 border border-yellow-500/30 rounded-lg p-2 text-sm text-zinc-100 focus:border-yellow-400 focus:outline-none">
+                    </div>
+                </div>
+
+                <div id="listaItens" class="space-y-2 max-h-40 overflow-y-auto pr-1 my-3">
                     <p id="carrinhoVazio" class="text-xs text-zinc-500 text-center py-8">Nenhum produto selecionado.</p>
                 </div>
             </div>
@@ -93,6 +115,9 @@
                     <input type="hidden" name="cliente_nome" id="formClienteNome">
                     <input type="hidden" name="itens_resumo" id="formItensResumo">
                     <input type="hidden" name="valor_total" id="formValorTotal">
+                    <input type="hidden" name="forma_pagamento" id="formFormaPagamento" value="avista">
+                    <input type="hidden" name="data_vencimento" id="formDataVencimento" value="">
+
                     <button type="submit" class="w-full bg-yellow-400 text-black text-base font-extrabold py-3 rounded-xl hover:bg-yellow-500 transition shadow-lg mt-2">
                         FINALIZAR & DAR BAIXA ✅
                     </button>
@@ -103,6 +128,17 @@
 
     <script>
         let comanda = [];
+
+        function alternarTipoPagamento() {
+            let tipo = document.querySelector('input[name="tipoPagamento"]:checked').value;
+            let blocoVencimento = document.getElementById('blocoVencimento');
+            if (tipo === 'fiado') {
+                blocoVencimento.classList.remove('hidden');
+            } else {
+                blocoVencimento.classList.add('hidden');
+            }
+        }
+
         function adicionarItem(id, nome, preco, estoque) {
             let item = comanda.find(i => i.id === id);
             if (item) {
@@ -144,13 +180,30 @@
             });
             document.getElementById("totalItensQtd").innerText = totalQtd;
             document.getElementById("valorTotalExibicao").innerText = `R$ ${totalValor.toFixed(2)}`;
+
             document.getElementById("formClienteNome").value = document.getElementById("clienteNome").value || "Cliente Balcão";
             document.getElementById("formItensResumo").value = resumoTexto.join(", ");
             document.getElementById("formValorTotal").value = totalValor.toFixed(2);
         }
         function validarVenda() {
             if (comanda.length === 0) { alert("Selecione ao menos um produto!"); return false; }
-            document.getElementById("formClienteNome").value = document.getElementById("clienteNome").value || "Cliente Balcão";
+            let nomeCliente = document.getElementById("clienteNome").value || "Cliente Balcão";
+            let tipoPagamento = document.querySelector('input[name="tipoPagamento"]:checked').value;
+
+            if (tipoPagamento === 'fiado') {
+                let dataVenc = document.getElementById('dataVencimento').value;
+                if (!dataVenc) {
+                    alert("Para vendas no Caderninho (Fiado), é obrigatório informar a data de vencimento!");
+                    return false;
+                }
+                document.getElementById('formDataVencimento').value = dataVenc;
+                document.getElementById('formFormaPagamento').value = 'Fiado';
+            } else {
+                document.getElementById('formDataVencimento').value = '';
+                document.getElementById('formFormaPagamento').value = 'À Vista';
+            }
+
+            document.getElementById("formClienteNome").value = nomeCliente;
             return true;
         }
         function filtrarProdutosPdv() {
