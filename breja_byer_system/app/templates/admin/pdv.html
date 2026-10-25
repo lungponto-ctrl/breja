@@ -20,6 +20,9 @@
                 <a href="/admin/pdv" class="text-yellow-400 font-semibold border-b-2 border-yellow-400 pb-1 text-sm">Caixa / PDV</a>
                 <a href="/admin/estoque" class="text-zinc-400 hover:text-yellow-400 transition text-sm">Estoque</a>
 
+                <!-- Aba do Caderninho Adicionada no Menu -->
+                <a href="/admin/caderninho" class="text-zinc-400 hover:text-yellow-400 transition text-sm font-semibold flex items-center gap-1">📓 Caderninho</a>
+
                 <!-- Botão Kanban Piscante / Alerta Global -->
                 <a href="/admin/kanban" class="px-3 py-1.5 rounded text-sm font-bold transition flex items-center gap-1.5 {% if pendentes_count and pendentes_count > 0 %}bg-red-600 text-white animate-bounce border border-red-400 shadow-lg shadow-red-500/50{% else %}text-zinc-400 hover:text-yellow-400 transition text-sm{% endif %}">
                     {% if pendentes_count and pendentes_count > 0 %}
@@ -35,6 +38,13 @@
             </div>
         </div>
     </nav>
+
+    <!-- Alerta caso o cliente esteja bloqueado por dívida vencida -->
+    {% if erro == 'cliente_bloqueado' %}
+    <div class="bg-red-600 text-white text-center py-3 px-4 font-bold text-sm shadow-lg flex items-center justify-center gap-2">
+        <span>⚠️ ATENÇÃO: Este cliente possui contas VENCIDAS no Caderninho! A venda a prazo foi bloqueada. Regularize o pagamento na aba Caderninho.</span>
+    </div>
+    {% endif %}
 
     <main class="container mx-auto p-6 flex-grow grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-4">
