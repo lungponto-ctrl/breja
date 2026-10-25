@@ -13,10 +13,10 @@
             ⚠️ AVISO LEGAL: É proibida a venda e entrega de bebidas alcoólicas e cigarros a menores de 18 anos (Lei nº 8.069/90 - ECA). Beba com moderação.
         </div>
 
-        <!-- Navbar do Site com Nome Grande e Dados da Loja -->
-        <header class="bg-black border-b border-yellow-500/30 px-6 py-5 flex flex-col md:flex-row justify-between items-center sticky top-0 z-40 shadow-lg gap-4">
-            <div class="flex items-center space-x-3 text-center md:text-left">
-                <span class="text-4xl">🍺</span>
+        <!-- Navbar do Site com Logo Nova, Nome e Dados da Loja -->
+        <header class="bg-black border-b border-yellow-500/30 px-6 py-4 flex flex-col md:flex-row justify-between items-center sticky top-0 z-40 shadow-lg gap-4">
+            <div class="flex items-center space-x-4 text-center md:text-left">
+                <img src="https://i.ibb.co/3ykXgB6/logo-breja.jpg" alt="Breja Beer Logo" class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-2xl border border-yellow-500/40 shadow-md bg-black">
                 <div>
                     <h1 class="text-2xl md:text-3xl font-black tracking-wider text-yellow-400">BREJA BEER <span class="text-white text-lg font-bold block md:inline">Distribuidora do Merreis</span></h1>
                     <p class="text-[11px] text-zinc-400 mt-1">📍 R. Antônio Anastácio, 45 - Residencial Lagoa, Betim | 📞 (31) 97143-6876</p>
@@ -62,7 +62,7 @@
                                         <img src="{{ p.imagem }}" alt="{{ p.nome }}" class="w-full h-full object-cover">
                                     {% else %}
                                         <span class="text-4xl">🍺</span>
-                                    <% endif %}
+                                    {% endif %}
                                 </div>
                                 <span class="text-[10px] bg-zinc-950 text-yellow-300 px-2.5 py-1 rounded-full font-bold border border-yellow-500/20">{{ p.categoria or 'Geral' }}</span>
                                 <h3 class="font-bold text-white text-base mt-2">{{ p.nome }}</h3>
