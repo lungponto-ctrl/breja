@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request, Depends, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, time
 
 from app.database import get_db
 from app.models.produto import Produto
@@ -308,9 +308,11 @@ def admin_financeiro(request: Request, data_inicio: str = None, data_fim: str = 
     try:
         query = db.query(Pedido)
         if data_inicio:
-            query = query.filter(Pedido.data_criacao >= datetime.strptime(data_inicio, "%Y-%m-%d"))
+            dt_ini = datetime.strptime(data_inicio, "%Y-%m-%d").date()
+            query = query.filter(Pedido.data_criacao >= datetime.combine(dt_ini, time.min))
         if data_fim:
-            query = query.filter(Pedido.data_criacao <= datetime.strptime(data_fim, "%Y-%m-%d"))
+            dt_fim = datetime.strptime(data_fim, "%Y-%m-%d").date()
+            query = query.filter(Pedido.data_criacao <= datetime.combine(dt_fim, time.max))
         pedidos_brutos = query.all()
     except Exception:
         pedidos_brutos = []
@@ -343,7 +345,7 @@ def admin_financeiro(request: Request, data_inicio: str = None, data_fim: str = 
     pendentes_count = obter_pendentes_count(db)
 
     return templates.TemplateResponse(request, "admin/financeiro.html", {
-        "pedidos": pedidos_Validos,
+        "pedidos": pedidos_brutos,
         "faturamento_total": faturamento_total,
         "custo_total": custo_total,
         "lucro_estimado": lucro_estimado,
