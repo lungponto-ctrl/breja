@@ -237,7 +237,6 @@ def pdv_finalizar(
     if not verificar_auth(request):
         return RedirectResponse(url="/login", status_code=303)
     try:
-        # Se for fiado, verifica se o cliente tem dívidas vencidas
         if forma_pagamento == "Fiado":
             hoje = datetime.now()
             dividas_vencidas = db.query(Caderninho).filter(
@@ -249,11 +248,9 @@ def pdv_finalizar(
             if dividas_vencidas:
                 return RedirectResponse(url="/admin/pdv?erro=cliente_bloqueado", status_code=303)
 
-        # Regista o pedido
         novo = Pedido(cliente_nome=cliente_nome, itens_resumo=itens_resumo, valor_total=valor_total, status="Entregue")
         db.add(novo)
 
-        # Se for fiado, adiciona ao caderninho
         if forma_pagamento == "Fiado" and data_vencimento:
             dt_venc = datetime.strptime(data_vencimento, "%Y-%m-%d")
             novo_fiado = Caderninho(
@@ -278,17 +275,15 @@ def admin_caderninho(request: Request, db: Session = Depends(get_db)):
     if not verificar_auth(request):
         return RedirectResponse(url="/login", status_code=303)
     try:
-        fiados = db.query(Caderninho).order_by(Caderninho.data_vencimento.asc()).all()
+        dividas = db.query(Caderninho).order_by(Caderninho.data_vencimento.asc()).all()
     except Exception:
-        fiados = []
+        dividas = []
 
     pendentes_count = obter_pendentes_count(db)
-    hoje = datetime.now()
 
     return templates.TemplateResponse(request, "admin/caderninho.html", {
-        "fiados": fiados,
-        "pendentes_count": pendentes_count,
-        "hoje": hoje
+        "dividas": dividas,
+        "pendentes_count": pendentes_count
     })
 
 
@@ -316,19 +311,42 @@ def admin_financeiro(request: Request, data_inicio: str = None, data_fim: str = 
             query = query.filter(Pedido.data_criacao >= datetime.strptime(data_inicio, "%Y-%m-%d"))
         if data_fim:
             query = query.filter(Pedido.data_criacao <= datetime.strptime(data_fim, "%Y-%m-%d"))
-        pedidos = query.all()
+        pedidos_brutos = query.all()
     except Exception:
-        pedidos = []
+        pedidos_brutos = []
 
-    faturamento_total = sum(float(p.valor_total) for p in pedidos if p and p.valor_total is not None)
+    # Identificar quais nomes/itens estão pendentes no caderninho para excluí-los do faturamento do DRE
+    try:
+        caderninhos_pendentes = db.query(Caderninho).filter(Caderninho.status == "Pendente").all()
+        # Mapeia chaves de controle (cliente + valor + itens) ou IDs de fiados pendentes
+        fiados_pendentes_valores = [(c.cliente_nome.strip().lower(), float(c.valor_total)) for c in
+                                    caderninhos_pendentes]
+    except Exception:
+        fiados_pendentes_valores = []
+
+    pedidos_Validos = []
+    for p in pedidos_brutos:
+        if not p or p.valor_total is None:
+            continue
+        # Verifica se este pedido corresponde a um fiado ainda pendente
+        c_nome = (p.cliente_nome or "").strip().lower()
+        c_val = float(p.valor_total)
+
+        is_fiado_pendente = any(fp[0] == c_nome and abs(fp[1] - c_val) < 0.01 for fp in fiados_pendentes_valores)
+
+        # Se NÃO for um fiado pendente, ele entra no faturamento (ou seja, À Vista ou Fiado já pago)
+        if not is_fiado_pendente:
+            pedidos_Validos.append(p)
+
+    faturamento_total = sum(float(p.valor_total) for p in pedidos_Validos)
     custo_total = faturamento_total * 0.4
     lucro_estimado = faturamento_total - custo_total
-    ticket_medio = faturamento_total / len(pedidos) if pedidos and len(pedidos) > 0 else 0.0
+    ticket_medio = faturamento_total / len(pedidos_Validos) if len(pedidos_Validos) > 0 else 0.0
 
     pendentes_count = obter_pendentes_count(db)
 
     return templates.TemplateResponse(request, "admin/financeiro.html", {
-        "pedidos": pedidos, "faturamento_total": faturamento_total, "custo_total": custo_total,
+        "pedidos": pedidos_Validos, "faturamento_total": faturamento_total, "custo_total": custo_total,
         "lucro_estimado": lucro_estimado, "ticket_medio": ticket_medio,
         "data_inicio": data_inicio or "", "data_fim": data_fim or "",
         "chart_dias_labels": [], "chart_dias_valores": [],
