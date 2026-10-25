@@ -65,11 +65,19 @@
             </form>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Cards de Indicadores Financeiros (Agora com 5 colunas incluindo o Total a Receber do Caderninho) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             <div class="bg-zinc-900 border border-yellow-500/30 rounded-2xl p-5 shadow-lg">
-                <p class="text-xs text-zinc-400 uppercase font-bold">Faturamento Total</p>
+                <p class="text-xs text-zinc-400 uppercase font-bold">Faturamento (Caixa)</p>
                 <h3 class="text-2xl font-black text-green-400 mt-2">R$ {{ "%.2f"|format(faturamento_total) }}</h3>
             </div>
+
+            <!-- Cartão Isolado de A Receber (Fiado) -->
+            <div class="bg-zinc-900 border border-amber-500/50 rounded-2xl p-5 shadow-lg">
+                <p class="text-xs text-amber-400 uppercase font-bold">📓 A Receber (Fiado)</p>
+                <h3 class="text-2xl font-black text-amber-400 mt-2">R$ {{ "%.2f"|format(total_a_receber) }}</h3>
+            </div>
+
             <div class="bg-zinc-900 border border-yellow-500/30 rounded-2xl p-5 shadow-lg">
                 <p class="text-xs text-zinc-400 uppercase font-bold">Custo Estimado (40%)</p>
                 <h3 class="text-2xl font-black text-red-400 mt-2">R$ {{ "%.2f"|format(custo_total) }}</h3>

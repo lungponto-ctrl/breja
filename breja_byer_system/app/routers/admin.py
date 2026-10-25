@@ -318,23 +318,24 @@ def admin_financeiro(request: Request, data_inicio: str = None, data_fim: str = 
     # Identificar quais nomes/itens estão pendentes no caderninho para excluí-los do faturamento do DRE
     try:
         caderninhos_pendentes = db.query(Caderninho).filter(Caderninho.status == "Pendente").all()
-        # Mapeia chaves de controle (cliente + valor + itens) ou IDs de fiados pendentes
         fiados_pendentes_valores = [(c.cliente_nome.strip().lower(), float(c.valor_total)) for c in
                                     caderninhos_pendentes]
+
+        # Calcular o total geral que está pendente no caderninho (para exibir no card isolado)
+        total_a_receber = sum(float(c.valor_total) for c in caderninhos_pendentes if c and c.valor_total is not None)
     except Exception:
         fiados_pendentes_valores = []
+        total_a_receber = 0.0
 
     pedidos_Validos = []
     for p in pedidos_brutos:
         if not p or p.valor_total is None:
             continue
-        # Verifica se este pedido corresponde a um fiado ainda pendente
         c_nome = (p.cliente_nome or "").strip().lower()
         c_val = float(p.valor_total)
 
         is_fiado_pendente = any(fp[0] == c_nome and abs(fp[1] - c_val) < 0.01 for fp in fiados_pendentes_valores)
 
-        # Se NÃO for um fiado pendente, ele entra no faturamento (ou seja, À Vista ou Fiado já pago)
         if not is_fiado_pendente:
             pedidos_Validos.append(p)
 
@@ -346,10 +347,12 @@ def admin_financeiro(request: Request, data_inicio: str = None, data_fim: str = 
     pendentes_count = obter_pendentes_count(db)
 
     return templates.TemplateResponse(request, "admin/financeiro.html", {
-        "pedidos": pedidos_Validos, "faturamento_total": faturamento_total, "custo_total": custo_total,
-        "lucro_estimado": lucro_estimado, "ticket_medio": ticket_medio,
+        "pedidos": pedidos_Validos,
+        "faturamento_total": faturamento_total,
+        "custo_total": custo_total,
+        "lucro_estimado": lucro_estimado,
+        "ticket_medio": ticket_medio,
+        "total_a_receber": total_a_receber,  # <--- Enviado de forma isolada para o template
         "data_inicio": data_inicio or "", "data_fim": data_fim or "",
         "chart_dias_labels": [], "chart_dias_valores": [],
         "chart_cat_labels": ["Bebidas / Aluguer", "Outros"], "chart_cat_valores": [faturamento_total, 0.0],
-        "pendentes_count": pendentes_count
-    })
