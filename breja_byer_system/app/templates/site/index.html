@@ -92,7 +92,7 @@
                         <button type="button" onclick="limparCarrinho()" class="text-xs text-red-400 hover:text-red-300 font-semibold transition">Limpar Tudo</button>
                     </div>
 
-                    <div id="itens-carrinho" class="space-y-2 mb-4 max-h-[250px] overflow-y-auto pr-1 text-sm text-zinc-300">
+                    <div id="itens-carrinho" class="space-y-2 mb-4 max-h-[220px] overflow-y-auto pr-1 text-sm text-zinc-300">
                         <!-- Itens adicionados -->
                     </div>
 
@@ -104,6 +104,11 @@
                     <form action="/fazer-pedido" method="POST" onsubmit="return prepararEnvioPedido()" class="space-y-3">
                         <input type="hidden" name="itens_resumo" id="input-itens-resumo">
                         <input type="hidden" name="valor_total" id="input-valor-total">
+                        <!-- Campos ocultos para enviar dados de pagamento e troco ao site.py -->
+                        <input type="hidden" name="forma_pagamento" id="input-forma-pagamento" value="Pix">
+                        <input type="hidden" name="precisa_troco" id="input-precisa-troco" value="Não">
+                        <input type="hidden" name="troco_para" id="input-troco-para" value="0">
+
                         <div>
                             <label class="block text-xs font-medium text-zinc-400 mb-1">Seu Nome *</label>
                             <input type="text" name="cliente_nome" id="clienteNomeInput" required placeholder="Digite seu nome" class="w-full bg-zinc-950 border border-yellow-500/30 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-yellow-400">
@@ -112,6 +117,35 @@
                             <label class="block text-xs font-medium text-zinc-400 mb-1">Telefone / WhatsApp *</label>
                             <input type="text" name="cliente_telefone" required placeholder="(31) 9XXXX-XXXX" class="w-full bg-zinc-950 border border-yellow-500/30 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-yellow-400">
                         </div>
+
+                        <!-- Forma de Pagamento -->
+                        <div class="space-y-1">
+                            <label class="block text-xs font-medium text-zinc-400">Forma de Pagamento *</label>
+                            <select id="select-pagamento" onchange="toggleTroco()" class="w-full bg-zinc-950 border border-yellow-500/30 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-yellow-400">
+                                <option value="Pix">Pix</option>
+                                <option value="Dinheiro">Dinheiro 💵</option>
+                                <option value="Cartão">Cartão (Na Entrega)</option>
+                            </select>
+                        </div>
+
+                        <!-- Opção de Troco (Condicional para Dinheiro) -->
+                        <div id="div-troco" style="display: none;" class="space-y-2 bg-zinc-950 p-3 rounded-xl border border-yellow-500/20">
+                            <label class="block text-xs font-bold text-yellow-400">Precisa de troco?</label>
+                            <div class="flex gap-4">
+                                <label class="text-xs text-zinc-300 flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="radio_troco" value="Sim" onclick="toggleValorTroco(true)"> Sim
+                                </label>
+                                <label class="text-xs text-zinc-300 flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="radio_troco" value="Não" checked onclick="toggleValorTroco(false)"> Não
+                                </label>
+                            </div>
+
+                            <div id="div-valor-troco" style="display: none;" class="mt-2">
+                                <label class="block text-xs text-zinc-400 mb-1">Troco para quanto? (Ex: 50.00)</label>
+                                <input type="number" step="0.50" id="input-valor-troco-num" placeholder="R$ 0,00" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-2 text-sm text-white focus:outline-none focus:border-yellow-400">
+                            </div>
+                        </div>
+
                         <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl text-sm transition shadow-xl mt-2">
                             Enviar Pedido para o Caixa 🚀
                         </button>
@@ -163,6 +197,30 @@
         function limparCarrinho() {
             carrinho = [];
             atualizarCarrinhoUI();
+        }
+
+        function toggleTroco() {
+            const pag = document.getElementById('select-pagamento').value;
+            const divTroco = document.getElementById('div-troco');
+            document.getElementById('input-forma-pagamento').value = pag;
+
+            if (pag === 'Dinheiro') {
+                divTroco.style.display = 'block';
+            } else {
+                divTroco.style.display = 'none';
+                document.getElementById('div-valor-troco').style.display = 'none';
+                document.getElementById('input-precisa-troco').value = 'Não';
+                document.getElementById('input-troco-para').value = '0';
+            }
+        }
+
+        function toggleValorTroco(precisa) {
+            const divValor = document.getElementById('div-valor-troco');
+            divValor.style.display = precisa ? 'block' : 'none';
+            document.getElementById('input-precisa-troco').value = precisa ? 'Sim' : 'Não';
+            if (!precisa) {
+                document.getElementById('input-troco-para').value = '0';
+            }
         }
 
         function atualizarCarrinhoUI() {
@@ -218,6 +276,18 @@
 
             document.getElementById('input-itens-resumo').value = resumoStr;
             document.getElementById('input-valor-total').value = totalVal;
+
+            // Se for dinheiro e precisar de troco, captura o valor preenchido
+            const pag = document.getElementById('select-pagamento').value;
+            if (pag === 'Dinheiro' && document.getElementById('input-precisa-troco').value === 'Sim') {
+                let trocoVal = parseFloat(document.getElementById('input-valor-troco-num').value) || 0;
+                if (trocoVal <= totalVal) {
+                    alert("O valor do troco deve ser maior que o total do pedido!");
+                    return false;
+                }
+                document.getElementById('input-troco-para').value = trocoVal;
+            }
+
             return true;
         }
     </script>
