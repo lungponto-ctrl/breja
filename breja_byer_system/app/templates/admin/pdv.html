@@ -159,6 +159,7 @@
             }
             atualizarComanda();
         }
+
         function alterarQtd(id, delta) {
             let item = comanda.find(i => i.id === id);
             if (item) {
@@ -167,7 +168,12 @@
             }
             atualizarComanda();
         }
-        function limparComanda() { comanda = []; atualizarComanda(); }
+
+        function limparComanda() {
+            comanda = [];
+            atualizarComanda();
+        }
+
         function atualizarComanda() {
             let container = document.getElementById("listaItens");
             container.innerHTML = "";
@@ -195,6 +201,7 @@
             document.getElementById("formItensResumo").value = resumoTexto.join(", ");
             document.getElementById("formValorTotal").value = totalValor.toFixed(2);
         }
+
         function validarVenda() {
             if (comanda.length === 0) { alert("Selecione ao menos um produto!"); return false; }
             let nomeCliente = document.getElementById("clienteNome").value || "Cliente Balcão";
@@ -216,6 +223,7 @@
             document.getElementById("formClienteNome").value = nomeCliente;
             return true;
         }
+
         function filtrarProdutosPdv() {
             let input = document.getElementById("buscaPdv").value.toLowerCase();
             document.querySelectorAll(".item-card").forEach(card => {
@@ -224,7 +232,6 @@
             });
         }
 
-        // Alarme sonoro global ao carregar o PDV se houver pedidos pendentes
         function tocarAlertaSonoro() {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
