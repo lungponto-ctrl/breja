@@ -8,6 +8,7 @@ from datetime import datetime
 from app.database import get_db
 from app.models.produto import Produto
 from app.models.pedido import Pedido
+from app.models.caderninho import Caderninho
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -109,17 +110,16 @@ def excluir_produto(produto_id: int, request: Request, db: Session = Depends(get
     return RedirectResponse(url="/admin/estoque", status_code=303)
 
 
-# --- ADICIONADO: ROTA PARA EDITAR PRODUTO ---
 @router.post("/estoque/editar/{produto_id}")
 def editar_produto(
-    produto_id: int,
-    request: Request,
-    nome: str = Form(...),
-    categoria: str = Form(...),
-    preco_custo: float = Form(0.0),
-    preco_venda: float = Form(...),
-    quantidade: int = Form(...),
-    db: Session = Depends(get_db)
+        produto_id: int,
+        request: Request,
+        nome: str = Form(...),
+        categoria: str = Form(...),
+        preco_custo: float = Form(0.0),
+        preco_venda: float = Form(...),
+        quantidade: int = Form(...),
+        db: Session = Depends(get_db)
 ):
     if not verificar_auth(request):
         return RedirectResponse(url="/login", status_code=303)
@@ -200,7 +200,7 @@ def excluir_pedido_kanban(pedido_id: int, request: Request, db: Session = Depend
 
 
 @router.get("/pdv")
-def admin_pdv(request: Request, db: Session = Depends(get_db)):
+def admin_pdv(request: Request, erro: str = None, db: Session = Depends(get_db)):
     if not verificar_auth(request):
         return RedirectResponse(url="/login", status_code=303)
     try:
@@ -212,7 +212,8 @@ def admin_pdv(request: Request, db: Session = Depends(get_db)):
 
     return templates.TemplateResponse(request, "admin/pdv.html", {
         "produtos": produtos,
-        "pendentes_count": pendentes_count
+        "pendentes_count": pendentes_count,
+        "erro": erro
     })
 
 
@@ -220,34 +221,89 @@ def admin_pdv(request: Request, db: Session = Depends(get_db)):
 def admin_caixa(request: Request, db: Session = Depends(get_db)):
     if not verificar_auth(request):
         return RedirectResponse(url="/login", status_code=303)
-    try:
-        produtos = db.query(Produto).all()
-    except Exception:
-        produtos = []
-
-    pendentes_count = obter_pendentes_count(db)
-
-    return templates.TemplateResponse(request, "admin/pdv.html", {
-        "produtos": produtos,
-        "pendentes_count": pendentes_count
-    })
+    return RedirectResponse(url="/admin/pdv", status_code=303)
 
 
 @router.post("/pdv/finalizar")
 def pdv_finalizar(
-        request: Request, cliente_nome: str = Form("Cliente Balcão"),
-        itens_resumo: str = Form(...), valor_total: float = Form(...), db: Session = Depends(get_db)
+        request: Request,
+        cliente_nome: str = Form("Cliente Balcão"),
+        itens_resumo: str = Form(...),
+        valor_total: float = Form(...),
+        forma_pagamento: str = Form("À Vista"),
+        data_vencimento: str = Form(None),
+        db: Session = Depends(get_db)
 ):
     if not verificar_auth(request):
         return RedirectResponse(url="/login", status_code=303)
     try:
+        # Se for fiado, verifica se o cliente tem dívidas vencidas
+        if forma_pagamento == "Fiado":
+            hoje = datetime.now()
+            dividas_vencidas = db.query(Caderninho).filter(
+                Caderninho.cliente_nome.ilike(cliente_nome),
+                Caderninho.status == "Pendente",
+                Caderninho.data_vencimento < hoje
+            ).all()
+
+            if dividas_vencidas:
+                return RedirectResponse(url="/admin/pdv?erro=cliente_bloqueado", status_code=303)
+
+        # Regista o pedido
         novo = Pedido(cliente_nome=cliente_nome, itens_resumo=itens_resumo, valor_total=valor_total, status="Entregue")
         db.add(novo)
+
+        # Se for fiado, adiciona ao caderninho
+        if forma_pagamento == "Fiado" and data_vencimento:
+            dt_venc = datetime.strptime(data_vencimento, "%Y-%m-%d")
+            novo_fiado = Caderninho(
+                cliente_nome=cliente_nome,
+                itens_resumo=itens_resumo,
+                valor_total=valor_total,
+                data_vencimento=dt_venc,
+                status="Pendente"
+            )
+            db.add(novo_fiado)
+
         baixar_estoque_por_resumo(db, itens_resumo)
         db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Erro ao finalizar PDV: {e}")
+    return RedirectResponse(url="/admin/pdv", status_code=303)
+
+
+@router.get("/caderninho")
+def admin_caderninho(request: Request, db: Session = Depends(get_db)):
+    if not verificar_auth(request):
+        return RedirectResponse(url="/login", status_code=303)
+    try:
+        fiados = db.query(Caderninho).order_by(Caderninho.data_vencimento.asc()).all()
+    except Exception:
+        fiados = []
+
+    pendentes_count = obter_pendentes_count(db)
+    hoje = datetime.now()
+
+    return templates.TemplateResponse(request, "admin/caderninho.html", {
+        "fiados": fiados,
+        "pendentes_count": pendentes_count,
+        "hoje": hoje
+    })
+
+
+@router.post("/caderninho/pagar/{fiado_id}")
+def pagar_fiado(fiado_id: int, request: Request, db: Session = Depends(get_db)):
+    if not verificar_auth(request):
+        return RedirectResponse(url="/login", status_code=303)
+    try:
+        fiado = db.query(Caderninho).filter(Caderninho.id == fiado_id).first()
+        if fiado:
+            fiado.status = "Pago"
+            db.commit()
     except Exception:
         db.rollback()
-    return RedirectResponse(url="/admin/pdv", status_code=303)
+    return RedirectResponse(url="/admin/caderninho", status_code=303)
 
 
 @router.get("/financeiro")

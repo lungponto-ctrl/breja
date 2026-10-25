@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caderninho (Fiado) - Distribuidora do Merreis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+    <nav class="bg-black border-b border-yellow-500/30 px-6 py-4 flex justify-between items-center shadow-lg">
+        <div class="flex items-center space-x-4">
+            <h1 class="text-xl font-bold text-yellow-400">🍺 Distribuidora do Merreis - Admin</h1>
+            <div class="hidden md:flex space-x-3 items-center">
+                <a href="/admin/estoque" class="px-3 py-2 rounded text-zinc-400 hover:text-white text-sm font-medium">Estoque</a>
+                <a href="/admin/kanban" class="px-3 py-2 rounded text-zinc-400 hover:text-white text-sm font-medium">Kanban</a>
+                <a href="/admin/pdv" class="px-3 py-2 rounded text-zinc-400 hover:text-white text-sm font-medium">PDV / Caixa</a>
+                <a href="/admin/caderninho" class="px-3 py-2 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 text-sm font-medium">Caderninho 📓</a>
+                <a href="/admin/financeiro" class="px-3 py-2 rounded text-zinc-400 hover:text-white text-sm font-medium">Financeiro / DRE</a>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3">
+            <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition">Sair</a>
+        </div>
+    </nav>
+
+    <main class="p-6 max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-yellow-400">📓 Caderninho de Fiados (Contas a Receber)</h2>
+        </div>
+
+        <div class="bg-zinc-900 rounded-xl border border-yellow-500/20 overflow-hidden shadow-xl">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-black text-zinc-400 text-xs uppercase tracking-wider border-b border-zinc-800">
+                        <th class="p-3">Cliente</th>
+                        <th class="p-3">Mercadorias</th>
+                        <th class="p-3">Valor Total</th>
+                        <th class="p-3">Data da Compra</th>
+                        <th class="p-3">Vencimento</th>
+                        <th class="p-3">Status</th>
+                        <th class="p-3 text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-800 text-sm">
+                    {% for f in fiados %}
+                    {% set vencido = f.status == 'Pendente' and f.data_vencimento and f.data_vencimento < hoje %}
+                    <tr class="hover:bg-zinc-850 transition {% if vencido %}bg-red-950/40{% endif %}">
+                        <td class="p-3 font-bold {% if vencido %}text-red-500 animate-pulse text-base{% else %}text-white{% endif %}">
+                            {{ f.cliente_nome }}
+                            {% if vencido %}
+                                <span class="block text-[10px] bg-red-600 text-white px-2 py-0.5 rounded font-extrabold w-max mt-1">⚠️ VENCIDO / BLOQUEADO</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3 text-zinc-300 text-xs">{{ f.itens_resumo }}</td>
+                        <td class="p-3 text-yellow-400 font-bold">R$ {{ "%.2f"|format(f.valor_total) }}</td>
+                        <td class="p-3 text-zinc-400 text-xs">{{ f.data_compra.strftime('%d/%m/%Y') if f.data_compra else '-' }}</td>
+                        <td class="p-3 text-xs {% if vencido %}text-red-400 font-bold{% else %}text-zinc-300{% endif %}">
+                            {{ f.data_vencimento.strftime('%d/%m/%Y') if f.data_vencimento else '-' }}
+                        </td>
+                        <td class="p-3">
+                            {% if f.status == 'Pago' %}
+                                <span class="bg-green-600/20 text-green-400 text-xs px-2.5 py-1 rounded-full font-medium border border-green-500/20">Pago ✅</span>
+                            {% else %}
+                                <span class="bg-yellow-500/20 text-yellow-300 text-xs px-2.5 py-1 rounded-full font-medium border border-yellow-500/20">Pendente ⏳</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3 text-center">
+                            {% if f.status == 'Pendente' %}
+                            <form action="/admin/caderninho/pagar/{{ f.id }}" method="POST" onsubmit="return confirm('Confirmar o recebimento e dar baixa na conta de {{ f.cliente_nome }}?');">
+                                <button type="submit" class="bg-green-600 text-white hover:bg-green-700 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow">
+                                    Receber / Pagar 💵
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-xs text-zinc-500">Concluído</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-8 text-zinc-500">Nenhum registo no caderninho.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>
