@@ -2,9 +2,9 @@ import os
 from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 
-# Importa a engine, a Base e apenas os modelos reais e válidos
+# Importa a engine, a Base e todos os modelos reais e válidos (incluindo o caderninho!)
 from app.database import engine, Base
-from app.models import produto, pedido, usuario
+from app.models import produto, pedido, usuario, caderninho
 
 # Cria automaticamente todas as tabelas se não existirem
 Base.metadata.create_all(bind=engine)
