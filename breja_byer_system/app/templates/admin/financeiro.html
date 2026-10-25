@@ -31,7 +31,7 @@
                     {% endif %}
                 </a>
 
-                <!-- Nova Aba do Caderninho Adicionada Aqui -->
+                <!-- Aba do Caderninho -->
                 <a href="/admin/caderninho" class="text-zinc-400 hover:text-yellow-400 transition text-sm font-semibold flex items-center gap-1">📓 Caderninho</a>
 
                 <a href="/admin/financeiro" class="text-yellow-400 font-semibold border-b-2 border-yellow-400 pb-1 text-sm">Financeiro / DRE</a>
@@ -65,14 +65,13 @@
             </form>
         </div>
 
-        <!-- Cards de Indicadores Financeiros (Agora com 5 colunas incluindo o Total a Receber do Caderninho) -->
+        <!-- Cards de Indicadores Financeiros (5 Colunas: Faturamento, A Receber, Custo, Lucro, Ticket Médio) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             <div class="bg-zinc-900 border border-yellow-500/30 rounded-2xl p-5 shadow-lg">
                 <p class="text-xs text-zinc-400 uppercase font-bold">Faturamento (Caixa)</p>
                 <h3 class="text-2xl font-black text-green-400 mt-2">R$ {{ "%.2f"|format(faturamento_total) }}</h3>
             </div>
 
-            <!-- Cartão Isolado de A Receber (Fiado) -->
             <div class="bg-zinc-900 border border-amber-500/50 rounded-2xl p-5 shadow-lg">
                 <p class="text-xs text-amber-400 uppercase font-bold">📓 A Receber (Fiado)</p>
                 <h3 class="text-2xl font-black text-amber-400 mt-2">R$ {{ "%.2f"|format(total_a_receber) }}</h3>
@@ -82,10 +81,12 @@
                 <p class="text-xs text-zinc-400 uppercase font-bold">Custo Estimado (40%)</p>
                 <h3 class="text-2xl font-black text-red-400 mt-2">R$ {{ "%.2f"|format(custo_total) }}</h3>
             </div>
+
             <div class="bg-zinc-900 border border-yellow-500/30 rounded-2xl p-5 shadow-lg">
                 <p class="text-xs text-zinc-400 uppercase font-bold">Lucro Bruto Estimado</p>
                 <h3 class="text-2xl font-black text-yellow-400 mt-2">R$ {{ "%.2f"|format(lucro_estimado) }}</h3>
             </div>
+
             <div class="bg-zinc-900 border border-yellow-500/30 rounded-2xl p-5 shadow-lg">
                 <p class="text-xs text-zinc-400 uppercase font-bold">Ticket Médio</p>
                 <h3 class="text-2xl font-black text-blue-400 mt-2">R$ {{ "%.2f"|format(ticket_medio) }}</h3>
@@ -142,7 +143,6 @@
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#a1a1aa', boxWidth: 12 } } } }
         });
 
-        // Alarme sonoro global ao carregar a tela se houver pedidos pendentes
         function tocarAlertaSonoro() {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();

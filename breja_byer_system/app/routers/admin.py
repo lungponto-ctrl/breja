@@ -315,13 +315,9 @@ def admin_financeiro(request: Request, data_inicio: str = None, data_fim: str = 
     except Exception:
         pedidos_brutos = []
 
-    # Identificar quais nomes/itens estão pendentes no caderninho para excluí-los do faturamento do DRE
     try:
         caderninhos_pendentes = db.query(Caderninho).filter(Caderninho.status == "Pendente").all()
-        fiados_pendentes_valores = [(c.cliente_nome.strip().lower(), float(c.valor_total)) for c in
-                                    caderninhos_pendentes]
-
-        # Calcular o total geral que está pendente no caderninho (para exibir no card isolado)
+        fiados_pendentes_valores = [(c.cliente_nome.strip().lower(), float(c.valor_total)) for c in caderninhos_pendentes]
         total_a_receber = sum(float(c.valor_total) for c in caderninhos_pendentes if c and c.valor_total is not None)
     except Exception:
         fiados_pendentes_valores = []
@@ -352,7 +348,12 @@ def admin_financeiro(request: Request, data_inicio: str = None, data_fim: str = 
         "custo_total": custo_total,
         "lucro_estimado": lucro_estimado,
         "ticket_medio": ticket_medio,
-        "total_a_receber": total_a_receber,  # <--- Enviado de forma isolada para o template
-        "data_inicio": data_inicio or "", "data_fim": data_fim or "",
-        "chart_dias_labels": [], "chart_dias_valores": [],
-        "chart_cat_labels": ["Bebidas / Aluguer", "Outros"], "chart_cat_valores": [faturamento_total, 0.0],
+        "total_a_receber": total_a_receber,
+        "data_inicio": data_inicio or "",
+        "data_fim": data_fim or "",
+        "chart_dias_labels": [],
+        "chart_dias_valores": [],
+        "chart_cat_labels": ["Bebidas / Aluguer", "Outros"],
+        "chart_cat_valores": [faturamento_total, 0.0],
+        "pendentes_count": pendentes_count
+    })
