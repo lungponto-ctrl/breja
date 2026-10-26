@@ -1,5 +1,5 @@
 import os
-from fastapi import APIRouter, Request, Depends, Form
+from fastapi import APIRouter, Request, Depends, Form, UploadFile, File, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -49,9 +49,9 @@ def fazer_pedido(
         cliente_endereco: str = Form("Retirada no Balcão"),
         itens_resumo: str = Form(...),
         valor_total: float = Form(...),
-        forma_pagamento: str = Form("Pix"),          # <--- Novo campo recebido do carrinho
-        precisa_troco: str = Form("Não"),            # <--- Novo campo (Sim/Não)
-        troco_para: float = Form(0.0),               # <--- Novo campo com o valor do troco
+        forma_pagamento: str = Form("Pix"),  # <--- Campo recebido do carrinho
+        precisa_troco: str = Form("Não"),  # <--- Campo (Sim/Não)
+        troco_para: float = Form(0.0),  # <--- Valor do troco
         db: Session = Depends(get_db)
 ):
     try:
@@ -78,3 +78,24 @@ def fazer_pedido(
         db.rollback()
 
     return RedirectResponse(url="/?sucesso=true", status_code=303)
+
+
+# --- NOVA ROTA: Atualizar a Logo da Loja pelo Painel Admin ---
+@router.post("/admin/atualizar-logo")
+def atualizar_logo(logo_file: UploadFile = File(...)):
+    try:
+        # Define o caminho correto para salvar a logo dentro de static/img/logo.jpg
+        static_img_dir = os.path.join(os.path.dirname(BASE_DIR), "static", "img")
+        os.makedirs(static_img_dir, exist_ok=True)
+
+        file_path = os.path.join(static_img_dir, "logo.jpg")
+
+        # Salva o ficheiro enviado sobrescrevendo o anterior
+        with open(file_path, "wb") as buffer:
+            buffer.write(logo_file.file.read())
+
+    except Exception as e:
+        print(f"Erro ao atualizar a logo: {e}")
+
+    # Redireciona de volta para a área administrativa (ajuste a rota de destino se necessário, ex: /admin/kanban ou /admin)
+    return RedirectResponse(url="/admin/kanban", status_code=303)
