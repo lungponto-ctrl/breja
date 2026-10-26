@@ -10,10 +10,17 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# <--- ESTA LINHA É OBRIGATÓRIA PARA O url_for FUNCIONAR NO FASTAPI --->
+# Caminho absoluto da pasta app
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
+# Montagem explícita e segura da pasta static dentro de app/static
+static_dir = os.path.join(BASE_DIR, "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+else:
+    print(f"AVISO: A pasta static não foi encontrada em {static_dir}")
+
+# Configuração dos templates
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 from app.routers import admin, auth, site
